@@ -160,7 +160,7 @@ class okex (okcoinusd):
             self._cancelTimer(heartbeatTimer)
         self._contextSet(conxid, 'heartbeattimer', None)
 
-    def _websocket_on_add_channel(self):
+    def _websocket_on_add_channel(self, channel, msg, resData, contextId):
         return None
 
     def _websocket_on_remove_channel(self):
@@ -237,7 +237,7 @@ class okex (okcoinusd):
 
     def _websocket_on_message(self, contextId, data):
         # print('_websocketOnMsg', data)
-        msgs = json.loads(data)
+        msgs = json.loads(self.inflateRaw(data).decode('utf-8'))
         if isinstance(msgs, list):
             for i in range(0, len(msgs)):
                 self._websocket_dispatch(contextId, msgs[i])
@@ -248,12 +248,12 @@ class okex (okcoinusd):
         if event != 'ob':
             raise NotSupported('subscribe ' + event + '(' + symbol + ') not supported for exchange ' + self.id)
         data = self._contextGetSymbolData(contextId, event, symbol)
-        data['depth'] = params['depth']
-        data['limit'] = params['depth']
+        data['depth'] = params['limit']
+        data['limit'] = params['limit']
         self._contextSetSymbolData(contextId, event, symbol, data)
         sendJson = {
             'event': 'addChannel',
-            'channel': self._get_order_book_channel_by_symbol(symbol, params),
+            'channel': self._get_order_book_channel_by_symbol(symbol, {'depth':20}),
         }
         self.websocketSendJson(sendJson)
         nonceStr = str(nonce)
